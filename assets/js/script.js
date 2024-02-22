@@ -1,5 +1,4 @@
-
-const nasa_eonet_endpoint = "https://eonet.gsfc.nasa.gov/api/v3";
+const url = "https://eonet.gsfc.nasa.gov/api/v3";
 const geoCodingUrl  = 'https://api.mapbox.com/geocoding/v5/mapbox.places'
 let markers = [];
 let markerList = [];
@@ -8,20 +7,16 @@ let event_title;
 const sourcesList = ["AVO", "ABFIRE", "AU_BOM", "BYU_ICE", "BCWILDFIRE", "CALFIRE", "CEMS", "EO", "FEMA", "FloodList", "GDACS", "GLIDE", "InciWeb", "IDC", "JTWC", "MRR", "MBFIRE", "NASA_ESRS", "NASA_DISP", "NASA_HURR", "NOAA_NHC", "NOAA_CPC", "PDC", "ReliefWeb", "SIVolcano", "NATICE", "UNISYS", "USGS_EHP", "USGS_CMT", "HDDS", "DFES_WA"];
 let mapbox_accesstoken = 'pk.eyJ1IjoicGFyaXNyaSIsImEiOiJja2ppNXpmaHUxNmIwMnpsbzd5YzczM2Q1In0.8VJaqwqZ_zh8qyeAuqWQgw'
 mapboxgl.accessToken = mapbox_accesstoken;
-
 let map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
     zoom: 1,
     projection: 'equirectangular'
 });
-
 let event_link = '';
-
 let geojson = {
     'type': 'FeatureCollection',
 };
-
 $(function(){
     $(".datepicker").datepicker({
         changeMonth: true,
@@ -30,14 +25,14 @@ $(function(){
         yearRange: '1900:'+(new Date).getFullYear()
     });
 });
-
 $( document ).ready(function() {
     fetchEvents();
-    $.getJSON( nasa_eonet_endpoint + "/categories")
+    $.getJSON( url + "/categories")
     .done(function( data ) {
         $("#eventTitle").html(null);
         $.each( data.categories, function( key, event ) {
-            $( "#eventList" ).append(`
+            if(event.title === 'Volcanoes' || event.title === 'Wildfires' || event.title === 'Sea and Lake Ice'){
+                $( "#eventList" ).append(`
                 <li class="event">
                     <div class='event-desc'>
                     <h3><a href='#' onclick='showLayers("${event.title}", "${event.link}");'>` + event.title + `</a></h3>
@@ -46,10 +41,10 @@ $( document ).ready(function() {
                     <img src="assets/img/categories/${event.id}.png"></img>
                 </li>
             `);
+            }
         });
     });
 });
-
 function fetchEvents() {
     $("#eventTitle").html(null);
     $("#eventSelect").show();
@@ -58,14 +53,12 @@ function fetchEvents() {
     $("#startDate").val(null);
     $("#endDate").val(null);
 }
-
 function searchByDate() {
     let startDate = $('#startDate').val();
     let endDate = $('#endDate').val();
     let limit = $('#limit').val();
     showLayers(event_title, event_link, startDate, endDate, limit)
 }
-
 function showLayers(title, link, startDate, endDate, limit = 10) {
     if(link) {
         event_link = link;
@@ -98,14 +91,12 @@ function showLayers(title, link, startDate, endDate, limit = 10) {
         displayMap();
     });
 }
-
 function showMap(lat, lng) {
     let fm = markers.filter((e) => JSON.stringify(e?.geometry?.coordinates) === JSON.stringify(new Array(lat, lng)))[0];
     const popup = (`<div class='w-100'><h5>${fm['properties']['message']}</h5><h6>${fm['properties']['coordinatesData']}</h6><a class='a-ellips' target='_blank' href="${fm['properties']['url']}">${fm['properties']['url']}</a></div>`)
     $.each(map._popups, (i, p) => p.remove())
     new mapboxgl.Popup({ offset: 25 }).setLngLat(fm?.geometry?.coordinates).setHTML(popup).addTo(map);
 }
-
 async function displayMap() {
     $.each(markerList || [], function(key, markerPt ) {
         markerPt.remove();
@@ -137,9 +128,11 @@ async function displayMap() {
         markerList.push(ml.addTo(map));
     })
 }
-
 function setTheme(theme) {
     document.documentElement.style.setProperty('--primary-color', theme);
     localStorage.setItem('nasa-eonet-theme', theme);
 }
 setTheme(localStorage.getItem('nasa-eonet-theme') || '#1A4B84');
+
+
+
